@@ -1,13 +1,18 @@
-from pygame import init, mouse, event, MOUSEMOTION, font, display, draw, MOUSEBUTTONDOWN, QUIT, time as ptime
+from pygame import init, mouse, event, MOUSEMOTION, font, display, draw, MOUSEBUTTONDOWN, QUIT, time as ptime, RESIZABLE
 import CONNECT4 as C4
 from sys import argv
 import ctypes
 import pathlib
+import platform
 
+system = platform.system()
 
-lib = pathlib.Path().absolute() / "lib/connect4.so"
+if(system == 'Linux'):
+    lib = pathlib.Path().absolute() / "lib/connect4.so"
+if(system == 'Windows'):
+    lib = pathlib.Path().absolute() / "lib/connect4_win64.dll"
+
 c4_lib = ctypes.CDLL(lib)
-
 c4_lib.bestmove.argtypes = [ctypes.c_char_p]
 c4_lib.bestmove.restype = ctypes.c_int
 
@@ -85,7 +90,7 @@ class Game:
     def initialize_game(self):
         init()
         self.myfont = font.SysFont("monospace", 75)
-        self.screen = display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.screen = display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), RESIZABLE)
         display.set_caption('Connect4!')
         self.screen.fill(BLUE)
         display.flip()
@@ -139,25 +144,25 @@ class Game:
                                 self.draw_board(win)
                                 ptime.wait(1)
                             else:
-                                self.draw_board(1)
+                                self.draw_board(HUMAN_PLAYER)
                                 ptime.wait(1)
-                                self.flash_win(win, 2)
+                                self.flash_win(win, HUMAN_PLAYER)
                             self.board.reset_board()
                         else: self.draw_board(False)
                         
                         board_str = self.board.encode_state(AI_PLAYER)
                         result = c4_lib.bestmove(board_str.encode())
                         self.board.add_chip(True, result)
-            win = C4.iswin(self.board.values, AI_PLAYER)
-            if win:
-                if win == 'draw':
-                    self.draw_board(win)
-                    ptime.wait(1)
-                else:
-                    self.draw_board(2)
-                    ptime.wait(1)
-                    self.flash_win(win, 2)
-                self.board.reset_board()
+                    win = C4.iswin(self.board.values, AI_PLAYER)
+                    if win:
+                        if win == 'draw':
+                            self.draw_board(win)
+                            ptime.wait(2500)
+                        else:
+                            self.draw_board(AI_PLAYER)
+                            ptime.wait(1)
+                            self.flash_win(win, 2)
+                        self.board.reset_board()
             self.draw_board(False)
             clock.tick(30)
       

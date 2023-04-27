@@ -1,16 +1,19 @@
-from pygame import init, mouse, event, MOUSEMOTION, font, display, draw, MOUSEBUTTONDOWN, QUIT, time as ptime, RESIZABLE
+from pygame import init, mouse, event, MOUSEMOTION, font, display, draw, MOUSEBUTTONDOWN, QUIT, time as ptime, RESIZABLE, VIDEORESIZE
 import CONNECT4 as C4
 from sys import argv
 import ctypes
 import pathlib
 import platform
+from time import time
 
-system = platform.system()
+system = platform.system() # b            clang -shared -o connect4.dylib connect4_engine.c
 
 if(system == 'Linux'):
     lib = pathlib.Path().absolute() / "lib/connect4.so"
 if(system == 'Windows'):
     lib = pathlib.Path().absolute() / "lib/connect4_win64.dll"
+if(system == 'Darwin'):
+    lib = pathlib.Path().absolute() / "lib/connect4.dylib"
 
 c4_lib = ctypes.CDLL(lib)
 c4_lib.bestmove.argtypes = [ctypes.c_char_p]
@@ -35,8 +38,8 @@ AI_PLAYER = 2 #AI
 
 colours = [BLACK, RED, YELLOW]
 
-SCREEN_WIDTH = 900
-SCREEN_HEIGHT = 900
+SCREEN_WIDTH = int(900)
+SCREEN_HEIGHT = int(800)
 
 
 class Board:
@@ -130,12 +133,17 @@ class Game:
                 
         
     def run(self):
+        global SCREEN_HEIGHT, SCREEN_WIDTH, depth
         clock = ptime.Clock()
         running = True
         while running == True:
             for thing in event.get():
                 if thing.type == QUIT:
                     running = False
+                if thing.type == VIDEORESIZE:
+                    info = display.Info()
+                    SCREEN_WIDTH, SCREEN_HEIGHT = info.current_w, info.current_h
+                    self.board.rad = min((SCREEN_HEIGHT-100)//6, (SCREEN_WIDTH-100)//7)//2 - 10
                 if thing.type == MOUSEBUTTONDOWN:
                     if thing.button == 1 and self.handle_clicks(mouse.get_pos()):
                         win = C4.iswin(self.board.values, HUMAN_PLAYER)
@@ -148,10 +156,18 @@ class Game:
                                 ptime.wait(1)
                                 self.flash_win(win, HUMAN_PLAYER)
                             self.board.reset_board()
+                            continue
                         else: self.draw_board(False)
                         
                         board_str = self.board.encode_state(AI_PLAYER)
+                        start = time()
                         result = c4_lib.bestmove(board_str.encode())
+                        start = time() - start
+                        if start > 5 and depth > 2: 
+                            depth -= 1
+                        if start < 0.5:
+                            depth += 2
+                        print(depth)
                         self.board.add_chip(True, result)
                     win = C4.iswin(self.board.values, AI_PLAYER)
                     if win:

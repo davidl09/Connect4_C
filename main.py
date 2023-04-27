@@ -5,6 +5,7 @@ import ctypes
 import pathlib
 import platform
 from time import time
+import math
 
 system = platform.system() # b            clang -shared -o connect4.dylib connect4_engine.c
 
@@ -22,7 +23,7 @@ c4_lib.bestmove.restype = ctypes.c_int
 try:
     depth = int(argv[1])
 except:
-    depth = 10
+    depth = 9
 
 
 RED = (200, 10, 20)
@@ -62,6 +63,8 @@ class Board:
         for i in range(self.height):
             for j in range(self.width):
                 self.values[i][j] = 0
+        global depth
+        depth = 8
 
 
     def add_chip(self, turn, col):
@@ -83,7 +86,7 @@ class Board:
 
         result = result + chr(depth + 48)
         
-        return result
+        return result.encode()
 
 
 class Game:
@@ -140,45 +143,57 @@ class Game:
             for thing in event.get():
                 if thing.type == QUIT:
                     running = False
+
                 if thing.type == VIDEORESIZE:
                     info = display.Info()
                     SCREEN_WIDTH, SCREEN_HEIGHT = info.current_w, info.current_h
                     self.board.rad = min((SCREEN_HEIGHT-100)//6, (SCREEN_WIDTH-100)//7)//2 - 10
+
                 if thing.type == MOUSEBUTTONDOWN:
                     if thing.button == 1 and self.handle_clicks(mouse.get_pos()):
+
                         win = C4.iswin(self.board.values, HUMAN_PLAYER)
+
                         if win:
                             if win == 'draw':
                                 self.draw_board(win)
                                 ptime.wait(1)
+
                             else:
                                 self.draw_board(HUMAN_PLAYER)
                                 ptime.wait(1)
                                 self.flash_win(win, HUMAN_PLAYER)
+
                             self.board.reset_board()
                             continue
-                        else: self.draw_board(False)
+
+                        else: 
+                            self.draw_board(False)
                         
                         board_str = self.board.encode_state(AI_PLAYER)
                         start = time()
-                        result = c4_lib.bestmove(board_str.encode())
+                        result = c4_lib.bestmove(board_str)
+
+                        while not self.board.add_chip(1, result):
+                            board_str = self.board.encode_state(AI_PLAYER)
+                            result = c4_lib.bestmove(board_str.encode())
+
+                        print(result)
                         start = time() - start
-                        if start > 5 and depth > 2: 
-                            depth -= 1
-                        if start < 0.5:
-                            depth += 2
+                        depth += round(2*math.tanh(1-start))
+                        depth = min(14, depth)
                         print(depth)
-                        self.board.add_chip(True, result)
-                    win = C4.iswin(self.board.values, AI_PLAYER)
-                    if win:
-                        if win == 'draw':
-                            self.draw_board(win)
-                            ptime.wait(2500)
-                        else:
-                            self.draw_board(AI_PLAYER)
-                            ptime.wait(1)
-                            self.flash_win(win, 2)
-                        self.board.reset_board()
+
+                        win = C4.iswin(self.board.values, AI_PLAYER)
+                        if win:
+                            if win == 'draw':
+                                self.draw_board(win)
+                                ptime.wait(2500)
+                            else:
+                                self.draw_board(AI_PLAYER)
+                                ptime.wait(1)
+                                self.flash_win(win, 2)
+                            self.board.reset_board()
             self.draw_board(False)
             clock.tick(30)
       

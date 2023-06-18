@@ -10,7 +10,7 @@ import math
 system = platform.system() # b            clang -shared -o connect4.dylib connect4_engine.c
 
 if(system == 'Linux'):
-    lib = pathlib.Path().absolute() / "lib/connect4.so"
+    lib = pathlib.Path().absolute() / "lib/connect4fast.so"
 if(system == 'Windows'):
     lib = pathlib.Path().absolute() / "lib/connect4_win64.dll"
 if(system == 'Darwin'):

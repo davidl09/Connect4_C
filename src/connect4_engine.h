@@ -24,16 +24,16 @@
 
 
 struct minimax_return{
-    short column;
+    int column;
     long long score;
 };
 
 typedef struct MIN_ARGS{
-    short** board;
-    short depth;
+    int** board;
+    int depth;
     long long alpha;
     long long beta;
-    short player;
+    int player;
     long long score;
 }MIN_ARGS;
 
@@ -41,33 +41,33 @@ typedef struct MIN_ARGS{
 
 int bestmove(char* board_state);
 
-short** create_board();
+int** create_board();
 
-short play_move(short** board);
+int play_move(int** board);
 
 void flush_stdin();
 
-long long evaluate_window(short window[4], short player);
+long long evaluate_window(int window[4], int player);
 
-short is_legal_move(short** board, short column);
+int is_legal_move(int** board, int column);
 
-short** place_chip(short** board, short column, short player);
+int** place_chip(int** board, int column, int player);
 
-short isdraw(short** board);
+int isdraw(int** board);
 
-short iswin(short** board);
+int iswin(int** board);
 
-short** reset_board(short** board);
+int** reset_board(int** board);
 
-long long evaluate_window(short window[4], short player);
+long long evaluate_window(int window[4], int player);
 
-long long evaluate_board(short** board, short player);
+long long evaluate_board(int** board, int player);
 
-short** copy_board(short** board);
+int** copy_board(int** board);
 
-void free_board(short** board);
+void free_board(int** board);
 
-struct minimax_return minimax(short** board, short depth, long long alpha, long long beta, short player);
+struct minimax_return minimax(int** board, int depth, long long alpha, long long beta, int player);
 
 void* minimax_mt(void* minimax_args);
 

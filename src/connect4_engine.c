@@ -10,16 +10,16 @@
 int bestmove(char* board_state){
     //first 42 chars of board state are '0', '1', or '2', for human, ai, empty. 43rd char is player to move, either '1' or '2'
 
-    short** board = create_board();
+    int** board = create_board();
     for (int i = 0; i < BOARD_HEIGHT; ++i) {
         for (int j = 0; j < BOARD_WIDTH; ++j) {
-            board[i][j] = (short)board_state[BOARD_WIDTH * i + j] - (short)'0';
+            board[i][j] = (int)board_state[BOARD_WIDTH * i + j] - (int)'0';
         }
     }
 
-    short to_play = (board_state[42] == '1' ? HUMAN : AI);
-    short depth = (int)(board_state[43] - '0');
-    short move;
+    int to_play = (board_state[42] == '1' ? HUMAN : AI);
+    int depth = (int)(board_state[43] - '0');
+    int move;
     MIN_ARGS min_args[BOARD_WIDTH];
     pthread_t threads[BOARD_WIDTH];
 
@@ -51,11 +51,11 @@ int bestmove(char* board_state){
     return (int)move;
 }
 
-short** create_board(){
+int** create_board(){
     //allocate memory for the board and initialize values to 0
-    short** board = malloc(BOARD_HEIGHT*sizeof(short*));
+    int** board = malloc(BOARD_HEIGHT*sizeof(int*));
     for (int i = 0; i < BOARD_HEIGHT; ++i) {
-        board[i] = malloc(BOARD_WIDTH * sizeof(short));
+        board[i] = malloc(BOARD_WIDTH * sizeof(int));
         for (int j = 0; j < BOARD_WIDTH; ++j) {
             board[i][j] = EMPTY;
         }
@@ -64,7 +64,7 @@ short** create_board(){
 }
 
 
-short is_legal_move(short** board, short column){
+int is_legal_move(int** board, int column){
     if(board[0][column] == 0 && (7 > column && column >= 0))
         return 1;
     else return 0;
@@ -75,10 +75,10 @@ void flush_stdin(){
     while ((c = getchar()) != '\n' && c != EOF) { }
 }
 
-short play_move(short** board){
-    short move;
+int play_move(int** board){
+    int move;
     printf("Enter the index of the column in which you would like to play, in a range of 1-7\n");
-    scanf("%hd", &move);
+    scanf("%d", &move);
     move--;
     if(is_legal_move(board, move) == 1) {
         flush_stdin();
@@ -89,7 +89,7 @@ short play_move(short** board){
     return play_move(board);
 }
 
-short** place_chip(short** board, short column, short player){
+int** place_chip(int** board, int column, int player){
     if(!is_legal_move(board, column)){ //check if column is full
         return 0;
     }
@@ -103,8 +103,8 @@ short** place_chip(short** board, short column, short player){
     return board;
 }
 
-short isdraw(short** board){
-    short draw = 1;
+int isdraw(int** board){
+    int draw = 1;
     for (int i = 0; i < BOARD_WIDTH; ++i) {
         if(board[0][i] == 0)
             return 0;
@@ -112,7 +112,7 @@ short isdraw(short** board){
     return draw;
 }
 
-short iswin(short** board){
+int iswin(int** board){
     if(isdraw(board)){
         return 3;
     }
@@ -147,7 +147,7 @@ short iswin(short** board){
     return 0;
 }
 
-short** reset_board(short** board){
+int** reset_board(int** board){
     for (int i = 0; i < BOARD_HEIGHT; ++i) {
         for (int j = 0; j < BOARD_WIDTH; ++j) {
             board[i][j] = 0;
@@ -159,10 +159,10 @@ short** reset_board(short** board){
 
 
 
-long long evaluate_window(short window[4], short player) {
-    short opponent = 3 - player;
-    short player_count = 0;
-    short opponent_count = 0;
+long long evaluate_window(int window[4], int player) {
+    int opponent = 3 - player;
+    int player_count = 0;
+    int opponent_count = 0;
     for (int i = 0; i < 4; ++i) { //count chips in window
         if (window[i] == player) {
             player_count++;
@@ -181,9 +181,9 @@ long long evaluate_window(short window[4], short player) {
     return player_count - opponent_count;
 }
 
-long long evaluate_board(short** board, short player){
+long long evaluate_board(int** board, int player){
     long long score = 0;
-    short window[4];
+    int window[4];
     long long window_score;
     for (int i = 0; i < BOARD_HEIGHT; ++i) { //check rows
         for (int j = 0; j < BOARD_WIDTH - 3; ++j) {
@@ -232,28 +232,28 @@ long long evaluate_board(short** board, short player){
     return score;
 }
 
-short** copy_board(short** board){
+int** copy_board(int** board){
     //returns pointer to a copy of values in board array
-    short** new_board = malloc(sizeof(short*) * BOARD_HEIGHT); //allocate memory for board copy
+    int** new_board = malloc(sizeof(int*) * BOARD_HEIGHT); //allocate memory for board copy
     for (int i = 0; i < BOARD_HEIGHT; ++i) {
-        new_board[i] = malloc(sizeof(short) * BOARD_WIDTH);
+        new_board[i] = malloc(sizeof(int) * BOARD_WIDTH);
         memcpy(new_board[i], board[i], BOARD_WIDTH*sizeof(board[i][0]));
     }
     return new_board;
 }
 
-void free_board(short** board){
+void free_board(int** board){
     for (int i = 0; i < BOARD_HEIGHT; ++i) {
         free(board[i]);
     }
     free(board);
 }
 
-struct minimax_return minimax(short** board, short depth, long long alpha, long long beta, short player){
+struct minimax_return minimax(int** board, int depth, long long alpha, long long beta, int player){
     struct minimax_return best_move;
     best_move.column = -1;
     best_move.score = player == AI ? -10000000000 : 10000000000;
-    short win_state = iswin(board);
+    int win_state = iswin(board);
 
     //stopping conditions
     if(win_state == 2){
@@ -279,10 +279,10 @@ struct minimax_return minimax(short** board, short depth, long long alpha, long 
     }
 
     long long score;
-    short** new_board;
+    int** new_board;
 
     //check for wins before calling minimax
-    for (short i = 0; i < BOARD_WIDTH; ++i) {
+    for (int i = 0; i < BOARD_WIDTH; ++i) {
         new_board = copy_board(board);
         if(place_chip(new_board, i, player) != 0) {
             if(iswin(new_board) == AI){
@@ -304,7 +304,7 @@ struct minimax_return minimax(short** board, short depth, long long alpha, long 
     }
     //if no wins found at this depth continue searching
 
-    for (short i = 0; i < BOARD_WIDTH; ++i) {
+    for (int i = 0; i < BOARD_WIDTH; ++i) {
         new_board = copy_board(board);
         if(place_chip(new_board, i, player) != 0) {
             score = minimax(new_board, depth - 1, alpha, beta, 3 - player).score;
